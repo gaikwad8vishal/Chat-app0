@@ -10,6 +10,7 @@ export default function Signin() {
   const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
   const router = useRouter();
 
   // Redirect if already signed in
@@ -22,7 +23,7 @@ export default function Signin() {
 
   const handleSignin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError('');
+    setError(''); // Clear previous errors
     setIsLoading(true);
 
     // Validate input
@@ -43,15 +44,15 @@ export default function Signin() {
       if (response.ok) {
         // Store username in session storage for use in the chat page
         sessionStorage.setItem('username', username);
-        // Redirect to the chat page
+        // Keep loading state true during navigation to show "Redirecting..."
         router.push('/');
       } else {
         setError(data.message || 'Signin failed');
+        setIsLoading(false);
       }
     } catch (err) {
       console.error('Signin error:', err);
       setError('Network error. Please try again later.');
-    } finally {
       setIsLoading(false);
     }
   };
@@ -60,7 +61,11 @@ export default function Signin() {
     <div className="flex h-screen w-screen items-center justify-center bg-background">
       <div className="w-full max-w-md space-y-6 rounded-lg bg-card p-8 shadow-lg">
         <h1 className="text-2xl font-bold text-center">Signin</h1>
-        {error && <p className="text-red-500 text-center">{error}</p>}
+        {error && (
+          <p id="error-message" className="text-red-500 text-center">
+            {error}
+          </p>
+        )}
         <form onSubmit={handleSignin} className="space-y-4">
           <div>
             <label htmlFor="username" className="block text-sm font-medium">
@@ -76,31 +81,43 @@ export default function Signin() {
               placeholder="Enter your username"
               required
               disabled={isLoading}
+              aria-describedby={error ? 'error-message' : undefined}
             />
           </div>
           <div>
             <label htmlFor="password" className="block text-sm font-medium">
               Password
             </label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setPassword(e.target.value)
-              }
-              placeholder="Enter your password"
-              required
-              disabled={isLoading}
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setPassword(e.target.value)
+                }
+                placeholder="Enter your password"
+                required
+                disabled={isLoading}
+                aria-describedby={error ? 'error-message' : undefined}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-gray-500"
+                disabled={isLoading}
+              >
+                {showPassword ? 'Hide' : 'Show'}
+              </button>
+            </div>
           </div>
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? 'Signing in...' : 'Signin'}
+            {isLoading ? 'Redirecting...' : 'Signin'}
           </Button>
         </form>
         <div className="text-center text-sm space-y-2">
           <p>
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <a href="/signup" className="text-primary hover:underline">
               Signup
             </a>
