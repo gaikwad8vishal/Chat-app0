@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/app/ui/button';
 import { Input } from '@/app/ui/input';
 
@@ -11,14 +12,57 @@ interface Message {
   timestamp: string;
 }
 
+interface User {
+  username: string;
+  profilePicture: string | null; // Base64 string
+}
+
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState<string>('');
   const [ws, setWs] = useState<WebSocket | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const router = useRouter();
+
+  // Fetch user data (including profile picture)
+  useEffect(() => {
+    const username = sessionStorage.getItem('username');
+    if (!username) {
+      router.push('/signin'); // Redirect to signin if not authenticated
+      return;
+    }
+
+    // Fetch user data from the database
+    const fetchUser = async () => {
+      try {
+        const response = await fetch('/api/auth/user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username }),
+        });
+        const data = await response.json();
+        if (response.ok) {
+          setUser(data.user);
+        } else {
+          console.error('Failed to fetch user:', data.message);
+          sessionStorage.removeItem('username');
+          router.push('/signin');
+        }
+      } catch (error) {
+        console.error('Error fetching user:', error);
+        sessionStorage.removeItem('username');
+        router.push('/signin');
+      }
+    };
+
+    fetchUser();
+  }, [router]);
 
   // Initialize WebSocket connection
   useEffect(() => {
-    const username = 'JohnDoe'; // Replace with dynamic user data (e.g., from auth)
+    const username = sessionStorage.getItem('username');
+    if (!username) return;
+
     const websocket = new WebSocket(`ws://localhost:3000?username=${username}`);
 
     websocket.onopen = () => {
@@ -55,17 +99,30 @@ export default function Home() {
     }
   };
 
+  // Default avatar if no profile picture
+  const defaultAvatar = 'https://avatars.githubusercontent.com/u/1?v=4';
+
+  // Convert base64 to data URL for images
+  const getProfilePictureUrl = (base64: string | null) => {
+    if (!base64) return defaultAvatar;
+    return `data:image/jpeg;base64,${base64}`; // Adjust MIME type if needed
+  };
+
+  if (!user) {
+    return <div>Loading...</div>; // Show loading state while fetching user
+  }
+
   return (
     <div className="flex h-screen w-screen flex-col justify-between bg-background">
       <div className="flex h-16 items-center justify-between border-b px-6">
         <div className="flex items-center gap-2">
           <img
-            src="https://avatars.githubusercontent.com/u/1?v=4"
+            src={getProfilePictureUrl(user.profilePicture)}
             alt="Avatar"
             className="h-10 w-10 rounded-full"
           />
           <div className="flex flex-col">
-            <span className="text-sm font-semibold">John Doe</span>
+            <span className="text-sm font-semibold">{user.username}</span>
             <span className="text-xs text-muted-foreground">Online</span>
           </div>
         </div>
@@ -94,19 +151,19 @@ export default function Home() {
             <div
               key={index}
               className={`flex items-start gap-4 ${
-                msg.sender === 'JohnDoe' ? 'justify-end' : ''
+                msg.sender === user.username ? 'justify-end' : ''
               }`}
             >
-              {msg.sender !== 'JohnDoe' && (
+              {msg.sender !== user.username && (
                 <img
-                  src="https://avatars.githubusercontent.com/u/1?v=4"
+                  src={defaultAvatar} // In a real app, fetch the sender's profile picture
                   alt="Avatar"
                   className="h-8 w-8 rounded-full"
                 />
               )}
               <div
                 className={`max-w-xs rounded-lg p-4 ${
-                  msg.sender === 'JohnDoe'
+                  msg.sender === user.username
                     ? 'bg-secondary text-secondary-foreground'
                     : 'bg-primary text-primary-foreground'
                 }`}
@@ -116,9 +173,9 @@ export default function Home() {
                   {new Date(msg.timestamp).toLocaleTimeString()}
                 </span>
               </div>
-              {msg.sender === 'JohnDoe' && (
+              {msg.sender === user.username && (
                 <img
-                  src="https://avatars.githubusercontent.com/u/1?v=4"
+                  src={getProfilePictureUrl(user.profilePicture)}
                   alt="Avatar"
                   className="h-8 w-8 rounded-full"
                 />
