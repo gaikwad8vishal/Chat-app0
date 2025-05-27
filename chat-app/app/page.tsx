@@ -51,13 +51,11 @@ export default function Home() {
         } else {
           console.error('Failed to fetch user:', data.message);
           sessionStorage.removeItem('username');
-          sessionStorage.removeItem('authToken');
           router.push('/signin');
         }
       } catch (error) {
         console.error('Error fetching user:', error);
         sessionStorage.removeItem('username');
-        sessionStorage.removeItem('authToken');
         router.push('/signin');
       }
     };
@@ -68,8 +66,7 @@ export default function Home() {
   // Initialize WebSocket connection with reconnection logic
   useEffect(() => {
     const username = sessionStorage.getItem('username');
-    const authToken = sessionStorage.getItem('authToken');
-    if (!username || !authToken) {
+    if (!username) {
       router.push('/signin');
       return;
     }
@@ -79,8 +76,8 @@ export default function Home() {
     let reconnectTimeout: NodeJS.Timeout | null = null;
 
     const connectWebSocket = () => {
-      // Connect to the correct WebSocket path (/ws) with username and token
-      const websocket = new WebSocket(`ws://localhost:3000/ws?username=${username}&token=${authToken}`);
+      // Connect to the WebSocket path (/ws) with only the username
+      const websocket = new WebSocket(`ws://localhost:3000/ws?username=${username}`);
       setWsStatus('Connecting...');
 
       websocket.onopen = () => {
@@ -154,7 +151,7 @@ export default function Home() {
   // Fetch sender's profile picture
   const fetchSenderProfilePicture = async (sender: string) => {
     try {
-      const response = await fetch('/api/auth/user', {
+      const response = await fetch('/api/auth/users', { // Fixed endpoint to match /api/auth/users
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: sender }),
@@ -183,7 +180,6 @@ export default function Home() {
   // Handle logout
   const handleLogout = () => {
     sessionStorage.removeItem('username');
-    sessionStorage.removeItem('authToken');
     if (ws) {
       ws.close();
     }
