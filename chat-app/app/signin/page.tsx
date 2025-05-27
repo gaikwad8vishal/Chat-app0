@@ -100,7 +100,7 @@ export default function Signin() {
         </form>
         <div className="text-center text-sm space-y-2">
           <p>
-            Don’t have an account?{' '}
+            Don't have an account?{' '}
             <a href="/signup" className="text-primary hover:underline">
               Signup
             </a>
