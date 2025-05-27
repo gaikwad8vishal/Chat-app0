@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": " ts-node --transpile-only server.ts",
-    "build": "next build",
-    "start": "next start NODE_ENV=production ts-node server.ts",
+    "dev": "ts-node --transpile-only server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
     "lint": "next lint"
   },
   "dependencies": {
