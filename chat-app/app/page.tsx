@@ -82,7 +82,7 @@ export default function Home() {
 
       websocket.onopen = () => {
         console.log('Connected to WebSocket server');
-        setWsStatus('Connected');
+        setWsStatus('online');
         reconnectAttempts = 0; // Reset attempts on successful connection
         if (reconnectTimeout) {
           clearTimeout(reconnectTimeout);
@@ -106,7 +106,7 @@ export default function Home() {
 
       websocket.onclose = () => {
         console.log('Disconnected from WebSocket server');
-        setWsStatus('Disconnected');
+        setWsStatus('offline');
 
         // Attempt to reconnect with exponential backoff
         if (reconnectAttempts < maxReconnectAttempts) {
@@ -118,13 +118,13 @@ export default function Home() {
           }, delay);
         } else {
           console.error('Max reconnect attempts reached. Please refresh the page.');
-          setWsStatus('Disconnected (Max reconnect attempts reached)');
+          setWsStatus('offline (Max reconnect attempts reached)');
         }
       };
 
       websocket.onerror = (error: Event) => {
         console.error('WebSocket error:', error);
-        setWsStatus('Disconnected');
+        setWsStatus('offline');
       };
 
       setWs(websocket);
@@ -187,7 +187,7 @@ export default function Home() {
   };
 
   // Default avatar if no profile picture
-  const defaultAvatar = 'https://avatars.githubusercontent.com/u/1?v=4';
+  const defaultAvatar = 'https://img.freepik.com/premium-vector/default-avatar-profile-icon-social-media-user-image-gray-avatar-icon-blank-profile-silhouette-vector-illustration_561158-3467.jpg';
 
   // Convert base64 to data URL for images
   const getProfilePictureUrl = (base64: string | null) => {
@@ -216,9 +216,9 @@ export default function Home() {
   }
 
   return (
-    <div className="flex h-screen w-screen flex-col justify-between bg-background">
+    <div className="flex h-screen w-screen  flex-col justify-between bg-background">
       {/* Header */}
-      <div className="flex h-16 items-center justify-between border-b px-6 shadow-sm bg-card">
+      <div className="flex h-16 items-center bg-slate-400 justify-between border-b px-6 shadow-sm bg-card">
         <div className="flex items-center gap-3">
           <img
             src={getProfilePictureUrl(user.profilePicture)}
@@ -229,9 +229,9 @@ export default function Home() {
             <span className="text-sm font-semibold text-foreground">{user.username}</span>
             <span
               className={`text-xs ${
-                wsStatus === 'Connected'
+                wsStatus === 'online'
                   ? 'text-green-500'
-                  : wsStatus === 'Disconnected'
+                  : wsStatus === 'offline'
                   ? 'text-red-500'
                   : 'text-yellow-500'
               }`}
@@ -282,13 +282,13 @@ export default function Home() {
       </div>
 
       {/* Chat Messages */}
-      <div className="flex-1 overflow-y-auto p-6 bg-gradient-to-b from-background to-muted min-h-[200px]">
+      <div className="flex-1 bg-slate-200 overflow-y-auto p-6  from-background to-muted min-h-[200px]">
         <div className="flex flex-col gap-4">
           {messages.map((msg, index) => (
             <div
               key={index}
               className={`flex items-start gap-4 ${
-                msg.sender === user.username ? 'justify-end' : 'justify-start'
+                msg.sender === user.username ? 'justify-start' : 'justify-end'
               } max-w-full`}
             >
               {msg.sender !== user.username && (
@@ -301,8 +301,8 @@ export default function Home() {
               <div
                 className={`max-w-xs sm:max-w-sm md:max-w-md rounded-xl p-4 shadow-sm ${
                   msg.sender === user.username
-                    ? 'bg-secondary text-secondary-foreground'
-                    : 'bg-primary text-primary-foreground'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-secondary text-secondary-foreground'
                 }`}
               >
                 <p className="break-words">{msg.content}</p>

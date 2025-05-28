@@ -42,7 +42,6 @@ app.prepare().then(() => {
 
     ws.on('message', (message) => {
       const messageString = message.toString();
-      console.log('Received:', messageString);
 
       // Broadcast to all connected clients
       clients.forEach((client) => {
@@ -59,7 +58,6 @@ app.prepare().then(() => {
     });
 
     ws.on('close', () => {
-      console.log(`${username} disconnected`);
       clients.delete(ws);
     });
 
